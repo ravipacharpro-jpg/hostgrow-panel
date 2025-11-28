@@ -1,21 +1,37 @@
-import jwt from 'jsonwebtoken';
-import * as admin from 'firebase-admin';
+import type { NextApiRequest, NextApiResponse } from "next";
+import { verifyIdToken } from "@/lib/auth";
+import { db } from "@/lib/db";
 
-let app: admin.app.App | null = null;
-export function getAdmin(){
-  if(!app){
-    const raw = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
-    if(!raw) throw new Error('Missing FIREBASE_SERVICE_ACCOUNT_JSON');
-    const conf = JSON.parse(raw);
-    app = admin.initializeApp({
-      credential: admin.credential.cert(conf),
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
+  try {
+    const token = (req.headers.authorization || "")
+      .replace("Bearer ", "")
+      .trim();
+
+    if (!token)
+      return res.status(401).json({ error: "NO_TOKEN" });
+
+    const userData = await verifyIdToken(token);
+
+    const rows = await db(
+      `SELECT u.id, u.username, u.role, u.panel_id, p.slug 
+       FROM users u 
+       JOIN panels p ON p.id = u.panel_id 
+       WHERE u.firebase_uid = $1`,
+      [userData.uid]
+    );
+
+    return res.json({
+      firebase: userData,
+      user: rows[0] || null,
+    });
+  } catch (err: any) {
+    return res.status(401).json({
+      error: "BAD_TOKEN",
+      detail: String(err),
     });
   }
-  return app;
-}
-
-export async function verifyIdToken(idToken: string){
-  const adm = getAdmin();
-  const decoded = await adm.auth().verifyIdToken(idToken);
-  return decoded; // contains uid, etc.
 }
