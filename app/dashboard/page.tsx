@@ -1,7 +1,7 @@
 'use client'
 import React, { useEffect, useState } from 'react';
 import { getAuth } from 'firebase/auth';
-import '@/lib/firebase-client';
+import '../../lib/firebase-client'
 export default function Dashboard(){
   const [msg,setMsg]=useState('');
   useEffect(()=>{
