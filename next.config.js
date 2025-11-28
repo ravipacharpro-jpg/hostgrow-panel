@@ -7,11 +7,10 @@ const nextConfig = {
   webpack: (config) => {
     config.resolve.alias = {
       ...(config.resolve.alias || {}),
-      '@': path.resolve(__dirname), // "@/..." -> project root
+      '@': path.resolve(__dirname), // '@' -> project root
     };
     return config;
   },
 };
 
 module.exports = nextConfig;
-
