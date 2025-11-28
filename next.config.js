@@ -7,7 +7,7 @@ const nextConfig = {
   webpack: (config) => {
     config.resolve.alias = {
       ...(config.resolve.alias || {}),
-      '@': path.resolve(__dirname), // '@' -> project root
+      '@': path.resolve(__dirname), // "@/lib/..." => "<repo-root>/lib/..."
     };
     return config;
   },
