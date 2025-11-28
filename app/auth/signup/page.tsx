@@ -1,7 +1,7 @@
 'use client'
 import React, { useState } from 'react';
 import { getAuth, createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
-import '@/lib/firebase-client';
+import '../../../lib/firebase-client'
 const API = '';
 export default function Signup(){
   const auth = getAuth();
