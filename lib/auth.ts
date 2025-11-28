@@ -1,37 +1,21 @@
-import type { NextApiRequest, NextApiResponse } from "next";
-import { verifyIdToken } from "@/lib/auth";
-import { db } from "@/lib/db";
+// lib/auth.ts
+import { getApps, initializeApp, cert, AppOptions } from 'firebase-admin/app';
+import { getAuth } from 'firebase-admin/auth';
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  try {
-    const token = (req.headers.authorization || "")
-      .replace("Bearer ", "")
-      .trim();
+// Vercel env me ye JSON string hoti hai
+const sa = process.env.FIREBASE_SERVICE_ACCOUNT
+  ? JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT as string)
+  : null;
 
-    if (!token)
-      return res.status(401).json({ error: "NO_TOKEN" });
+if (!getApps().length) {
+  initializeApp({
+    credential: cert(sa),
+  } as AppOptions);
+}
 
-    const userData = await verifyIdToken(token);
-
-    const rows = await db(
-      `SELECT u.id, u.username, u.role, u.panel_id, p.slug 
-       FROM users u 
-       JOIN panels p ON p.id = u.panel_id 
-       WHERE u.firebase_uid = $1`,
-      [userData.uid]
-    );
-
-    return res.json({
-      firebase: userData,
-      user: rows[0] || null,
-    });
-  } catch (err: any) {
-    return res.status(401).json({
-      error: "BAD_TOKEN",
-      detail: String(err),
-    });
-  }
+/** Verify Firebase ID Token coming from client */
+export async function verifyIdToken(idToken: string) {
+  const adminAuth = getAuth();
+  const decoded = await adminAuth.verifyIdToken(idToken);
+  return decoded;
 }
